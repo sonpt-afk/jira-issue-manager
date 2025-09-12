@@ -1,0 +1,17 @@
+modules:
+  jira:projectPage:
+    - key: jira-issue-manager-hello-world-project-page
+      resource: main
+      title: carter-issue-manager
+resources:
+  - key: main
+    path: static/hello-world/build
+permissions:
+  scopes:
+    - 'read:jira-work'
+app:
+  runtime:
+    name: nodejs22.x
+    memoryMB: 256
+    architecture: arm64
+  id: ari:cloud:ecosystem::app/60ec4626-4076-4a2e-8b16-1bd89007b6fe
