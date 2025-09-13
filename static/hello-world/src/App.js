@@ -16,7 +16,7 @@ const App = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingProjects, setIsLoadingProjects] = useState(true);
 
-  const ISSUES_PER_PAGE = 10;
+  const ISSUES_PER_PAGE = 3;
 
   // Fetch all projects on initial load
   useEffect(() => {
