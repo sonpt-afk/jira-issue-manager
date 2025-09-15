@@ -10,7 +10,11 @@ import Button from "@atlaskit/button/new";
 import { Text } from "@atlaskit/primitives/compiled";
 import Form, { Field, HelperMessage } from "@atlaskit/form";
 import Textfield from "@atlaskit/textfield";
-import { getWorkType, updateIssue } from "../api/jiraService";
+import {
+  getWorkType,
+  updateIssue,
+  getIssueTransitions,
+} from "../api/jiraService";
 import { requestJira } from "@forge/bridge";
 import { Label } from "@atlaskit/form";
 import Select from "@atlaskit/select";
@@ -38,6 +42,15 @@ const UpdateModal = ({
     fetchWorkTypes();
   }, [selectedProject.id]);
 
+  const [transitions, setTransitions] = useState([]);
+  useEffect(() => {
+    if (updateIssueID) {
+      getIssueTransitions(updateIssueID).then((data) => {
+        setTransitions(data);
+      });
+    }
+  }, [updateIssueID]);
+
   const handleFormSubmit = async (formData) => {
     console.log("🚀 ~ handleFormSubmit ~ formData:", formData);
     try {
@@ -58,17 +71,6 @@ const UpdateModal = ({
               <ModalTitle>Update issue </ModalTitle>
             </ModalHeader>
             <ModalBody>
-              {/* <Field
-											id="type"
-											name="type"
-											label="Work Type"
-											defaultValue={updateIssueDefaultData?.fields?.issuetype?.name}
-										>
-											{({ fieldProps }) => (
-													<Textfield {...fieldProps} />
-											)}
-										</Field> */}
-
               <Field
                 name="type"
                 label="Work Type"
@@ -97,13 +99,23 @@ const UpdateModal = ({
               >
                 {({ fieldProps }) => <Textfield {...fieldProps} />}
               </Field>
-              <Field
-                id="status"
-                name="status"
-                label="Status"
-                defaultValue={updateIssueDefaultData?.fields?.status?.name}
-              >
-                {({ fieldProps }) => <Textfield {...fieldProps} />}
+              <Field name="transitionId" label="Change Status">
+                {({ fieldProps }) => (
+                  <Select
+                    {...fieldProps}
+                    placeholder="Choose a transition..."
+                    options={transitions.map((t) => ({
+                      label: t.name,
+                      value: t.id,
+                    }))}
+                    onChange={(selectedOption) =>
+                      fieldProps.onChange(selectedOption?.value)
+                    }
+                    value={transitions
+                      .map((t) => ({ label: t.name, value: t.id }))
+                      .find((opt) => opt.value === fieldProps.value)}
+                  />
+                )}
               </Field>
               <Field
                 id="assignee"

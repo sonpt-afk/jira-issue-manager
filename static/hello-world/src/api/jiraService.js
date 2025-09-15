@@ -49,15 +49,66 @@ export const fetchIssuesByProject = async (
 };
 
 export const updateIssue = async (issueId, updateData) => {
+  // Build the request body according to Jira API documentation
+  // https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issues/#api-rest-api-3-issue-issueidorkey-put
+  const body = {
+    fields: {},
+  };
+
+  // Handle transition for status update
+  if (updateData.transitionId) {
+    body.transition = { id: updateData.transitionId };
+  }
+
+  // Handle summary
+  if (updateData.summary) {
+    body.fields.summary = updateData.summary;
+  }
+
+  // Handle issuetype (Work Type)
+  if (updateData.type) {
+    body.fields.issuetype = { name: updateData.type };
+  }
+
+  // NOTE FOR 'assignee':
+  // Assigning an issue requires the user's accountId.
+  // The payload should be: { "fields": { "assignee": { "accountId": "..." } } }
+  // We are ignoring `assignee` from the form for now.
+
   const response = await requestJira(`/rest/api/3/issue/${issueId}`, {
     method: "PUT",
     headers: {
       Accept: "application/json",
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(updateData),
+    body: JSON.stringify(body),
   });
+
+  if (!response.ok) {
+    // Log the error response for better debugging
+    const errorText = await response.text();
+    console.error(`Failed to update issue ${issueId}:`, response.status, errorText);
+    // Re-throw the error to be caught by the calling component
+    throw new Error(errorText);
+  }
+
   return response;
+};
+
+export const getIssueTransitions = async (issueId) => {
+  if (!issueId) {
+    return [];
+  }
+  const response = await requestJira(`/rest/api/3/issue/${issueId}/transitions`);
+  if (!response.ok) {
+    console.error(
+      `Failed to fetch transitions for issue ${issueId}:`,
+      await response.text()
+    );
+    return [];
+  }
+  const data = await response.json();
+  return data.transitions || [];
 };
 
 export const deleteIssue = async (issueId) => {
