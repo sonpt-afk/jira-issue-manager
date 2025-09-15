@@ -55,7 +55,13 @@ export const deleteIssue = async (issueId) => {
    const response = await requestJira(`/rest/api/3/issue/${issueId}`, {
     method: 'DELETE',
   });
-  console.log(`Response: ${response.status} ${response.statusText}`);
 
   return response;
+};
+export const getWorkType = async (projectId) => {
+   const response = await requestJira(`/rest/api/3/issuetype/project?projectId=${projectId}`, {
+     headers: {
+       'Accept': 'application/json'
+     }});
+  return response.json();
 };
