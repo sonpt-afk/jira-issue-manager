@@ -4,9 +4,14 @@ import DynamicTable from "@atlaskit/dynamic-table";
 import Pagination from "@atlaskit/pagination";
 import Lozenge from "@atlaskit/lozenge";
 import Avatar from "@atlaskit/avatar";
-import { fetchProjects, fetchIssuesByProject,deleteIssue,updateIssue } from "./api/jiraService";
-import Button from '@atlaskit/button/new';
-import './App.css'
+import {
+  fetchProjects,
+  fetchIssuesByProject,
+  deleteIssue,
+  updateIssue,
+} from "./api/jiraService";
+import Button from "@atlaskit/button/new";
+import "./App.css";
 import DeleteModal from "./components/DeleteModal";
 import UpdateModal from "./components/UpdateModal";
 const App = () => {
@@ -18,16 +23,16 @@ const App = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingProjects, setIsLoadingProjects] = useState(true);
-	const [isOpenDelModal, setIsOpenDelModal] = useState(false);
-	const [isOpenUpdateModal, setIsOpenUpdateModal] = useState(false);
-  const [updateIssueDefaultData,setUpdateIssueDefaultData] = useState(null);
+  const [isOpenDelModal, setIsOpenDelModal] = useState(false);
+  const [isOpenUpdateModal, setIsOpenUpdateModal] = useState(false);
+  const [updateIssueDefaultData, setUpdateIssueDefaultData] = useState(null);
   const ISSUES_PER_PAGE = 3;
-	const openDeleteModal = () => setIsOpenDelModal(true);
-	const openUpdateModal = () => setIsOpenUpdateModal(true);
-	const closeDeleteModal = () => setIsOpenDelModal(false);
-	const closeUpdateModal = () => setIsOpenUpdateModal(false);
+  const openDeleteModal = () => setIsOpenDelModal(true);
+  const openUpdateModal = () => setIsOpenUpdateModal(true);
+  const closeDeleteModal = () => setIsOpenDelModal(false);
+  const closeUpdateModal = () => setIsOpenUpdateModal(false);
 
-    // Re-fetch issues for current project and page after a successful delete
+  // Re-fetch issues for current project and page after a successful delete
   const handleDeleteOrUpdateSuccess = () => {
     if (selectedProject) {
       getIssues(selectedProject.value, currentPage);
@@ -36,8 +41,6 @@ const App = () => {
   const [deleteIssueID, setDeleteIssueID] = useState(null);
   const [updateIssueID, setUpdateIssueID] = useState(null);
 
-  
-  
   // Fetch all projects on initial load
   useEffect(() => {
     setIsLoadingProjects(true);
@@ -46,7 +49,7 @@ const App = () => {
         const projectOptions = data.map((p) => ({
           label: p.name,
           value: p.key,
-          id: p.id
+          id: p.id,
         }));
         setProjects(projectOptions);
 
@@ -64,7 +67,6 @@ const App = () => {
 
   // Function to fetch issues for the selected project and page
   const getIssues = async (projectKey, page) => {
-
     if (!projectKey) return;
     setIsLoading(true);
     const startAt = (page - 1) * ISSUES_PER_PAGE;
@@ -82,10 +84,10 @@ const App = () => {
     } finally {
       setIsLoading(false);
     }
-  }
+  };
   // Handler for project selection change
   const handleProjectChange = (selection) => {
-    console.log("🚀 ~  ~ selection:", selection)
+    console.log("🚀 ~  ~ selection:", selection);
     setSelectedProject(selection);
     setCurrentPage(1); // Reset to first page
     getIssues(selection.value, 1);
@@ -96,7 +98,6 @@ const App = () => {
     setCurrentPage(newPage);
     getIssues(selectedProject.value, newPage);
   };
-
 
   // Table configuration
   const head = {
@@ -144,27 +145,34 @@ const App = () => {
           "Unassigned"
         ),
       },
-       {
+      {
         key: "action",
-        content:
-        <div className="action-cell">
-         <Button className="action-btn" appearance="primary" onClick={()=> {
-          openUpdateModal();
-          setUpdateIssueDefaultData(issue);
-          console.log('current issue',issue)
-          setUpdateIssueID(issue.id);
-        }}
-         
-         >Update</Button>
-         <Button className="action-btn" appearance="danger" onClick={()=> {
-          openDeleteModal();
-          setDeleteIssueID(issue.id);
-          
-        }}>Delete
-        
-        </Button>
-         </div>
-            },
+        content: (
+          <div className="action-cell">
+            <Button
+              className="action-btn"
+              appearance="primary"
+              onClick={() => {
+                openUpdateModal();
+                setUpdateIssueDefaultData(issue);
+                setUpdateIssueID(issue.id);
+              }}
+            >
+              Update
+            </Button>
+            <Button
+              className="action-btn"
+              appearance="danger"
+              onClick={() => {
+                openDeleteModal();
+                setDeleteIssueID(issue.id);
+              }}
+            >
+              Delete
+            </Button>
+          </div>
+        ),
+      },
     ],
   }));
 
@@ -204,19 +212,23 @@ const App = () => {
         </div>
       )}
 
-				{isOpenDelModal && <DeleteModal 
-        closeDeleteModal={closeDeleteModal} 
-        deleteIssueID={deleteIssueID}
-        onDeleteSuccess={handleDeleteOrUpdateSuccess}
-      /> }
+      {isOpenDelModal && (
+        <DeleteModal
+          closeDeleteModal={closeDeleteModal}
+          deleteIssueID={deleteIssueID}
+          onDeleteSuccess={handleDeleteOrUpdateSuccess}
+        />
+      )}
 
-				{isOpenUpdateModal && <UpdateModal 
-        closeUpdateModal={closeUpdateModal} 
-        onUpdateSuccess={handleDeleteOrUpdateSuccess}
-        updateIssueDefaultData={updateIssueDefaultData}
-        updateIssueID={updateIssueID}
-        selectedProject={selectedProject}
-      /> }
+      {isOpenUpdateModal && (
+        <UpdateModal
+          closeUpdateModal={closeUpdateModal}
+          onUpdateSuccess={handleDeleteOrUpdateSuccess}
+          updateIssueDefaultData={updateIssueDefaultData}
+          updateIssueID={updateIssueID}
+          selectedProject={selectedProject}
+        />
+      )}
     </div>
   );
 };
