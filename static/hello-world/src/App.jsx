@@ -4,8 +4,10 @@ import DynamicTable from "@atlaskit/dynamic-table";
 import Pagination from "@atlaskit/pagination";
 import Lozenge from "@atlaskit/lozenge";
 import Avatar from "@atlaskit/avatar";
-import { fetchProjects, fetchIssuesByProject } from "./api/jiraService";
-
+import { fetchProjects, fetchIssuesByProject,deleteIssue,updateIssue } from "./api/jiraService";
+import Button from '@atlaskit/button/new';
+import './App.css'
+import DeleteModal from "./components/DeleteModal";
 const App = () => {
   // State management
   const [projects, setProjects] = useState([]);
@@ -15,9 +17,23 @@ const App = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingProjects, setIsLoadingProjects] = useState(true);
+	const [isOpenDelModal, setIsOpenDelModal] = useState(false);
 
   const ISSUES_PER_PAGE = 3;
+	const openDeleteModal = useCallback(() => setIsOpenDelModal(true), []);
+	const closeDeleteModal = () => setIsOpenDelModal(false);
 
+  const handleDeleteSuccess = () => {
+    // Re-fetch issues for the current project and page after a successful delete
+    if (selectedProject) {
+      getIssues(selectedProject.value, currentPage);
+    }
+  };
+  const [deleteIssueID, setDeleteIssueID] = useState(null);
+
+  console.log('aaaa', selectedProject);
+  
+  
   // Fetch all projects on initial load
   useEffect(() => {
     setIsLoadingProjects(true);
@@ -34,7 +50,10 @@ const App = () => {
   }, []);
 
   // Function to fetch issues for the selected project and page
-  const getIssues = useCallback(async (projectKey, page) => {
+  const getIssues = async (projectKey, page) => {
+    console.log('2222');
+    console.log('projectKey',projectKey);
+    
     if (!projectKey) return;
     setIsLoading(true);
     const startAt = (page - 1) * ISSUES_PER_PAGE;
@@ -44,6 +63,7 @@ const App = () => {
         startAt,
         ISSUES_PER_PAGE
       );
+        console.log("🚀 ~ App ~ fetchedIssues:", fetchedIssues)
       setIssues(fetchedIssues);
       setTotalIssues(total);
     } catch (error) {
@@ -53,11 +73,11 @@ const App = () => {
     } finally {
       setIsLoading(false);
     }
-  }, []);
-
+  }
   // Handler for project selection change
   const handleProjectChange = (selection) => {
     setSelectedProject(selection);
+    console.log('selection',selection)
     setCurrentPage(1); // Reset to first page
     getIssues(selection.value, 1);
   };
@@ -68,14 +88,16 @@ const App = () => {
     getIssues(selectedProject.value, newPage);
   };
 
+
   // Table configuration
   const head = {
     cells: [
       { key: "type", content: "Type", width: 5 },
       { key: "key", content: "Key", width: 10 },
-      { key: "summary", content: "Summary", width: 55 },
+      { key: "summary", content: "Summary", width: 25 },
       { key: "status", content: "Status", width: 15 },
       { key: "assignee", content: "Assignee", width: 15 },
+      { key: "action", content: "Actions", width: 25 },
     ],
   };
 
@@ -113,6 +135,20 @@ const App = () => {
           "Unassigned"
         ),
       },
+       {
+        key: "action",
+        content:
+        <div className="action-cell">
+         <Button className="action-btn" appearance="primary">Update</Button>
+         <Button className="action-btn" appearance="danger" onClick={()=> {
+          openDeleteModal();
+          setDeleteIssueID(issue.id);
+          
+        }}>Delete
+        
+        </Button>
+         </div>
+            },
     ],
   }));
 
@@ -151,6 +187,12 @@ const App = () => {
           )}
         </div>
       )}
+
+				{isOpenDelModal && <DeleteModal 
+        closeDeleteModal={closeDeleteModal} 
+        deleteIssueID={deleteIssueID}handleDeleteSuccess
+        onDeleteSuccess={handleDeleteSuccess}
+      /> }
     </div>
   );
 };

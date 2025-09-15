@@ -10,15 +10,11 @@ export const fetchProjects = async () => {
     console.error("Failed to fetch projects:", errorText);
     throw new Error(`Failed to fetch projects: ${response.status}`);
   }
-  return await response.json();
+  return response.json();
 };
 
-/**
- * Fetches issues for a given project key with pagination.
- * @param {string} projectKey - The key of the project (e.g., "TEST").
- * @param {number} startAt - The starting index for pagination.
- * @param {number} maxResults - The number of issues to return per page.
- */
+
+
 export const fetchIssuesByProject = async (projectKey, startAt = 0, maxResults = 10) => {
   if (!projectKey) {
     console.error("Project key is required to fetch issues.");
@@ -41,4 +37,25 @@ export const fetchIssuesByProject = async (projectKey, startAt = 0, maxResults =
     issues: result.issues,
     total: result.total,
   };
+};
+
+export const updateIssue = async (issueId,updateData) => {
+   const response = await requestJira(`/rest/api/3/issue/${issueId}`, {
+    method: 'PUT',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(updateData)
+  });
+  return response;
+};
+
+export const deleteIssue = async (issueId) => {
+   const response = await requestJira(`/rest/api/3/issue/${issueId}`, {
+    method: 'DELETE',
+  });
+  console.log(`Response: ${response.status} ${response.statusText}`);
+
+  return response;
 };
