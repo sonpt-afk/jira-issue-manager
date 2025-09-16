@@ -58,16 +58,6 @@ const UpdateModal = ({
               <ModalTitle>Update issue </ModalTitle>
             </ModalHeader>
             <ModalBody>
-              {/* <Field
-											id="type"
-											name="type"
-											label="Work Type"
-											defaultValue={updateIssueDefaultData?.fields?.issuetype?.name}
-										>
-											{({ fieldProps }) => (
-													<Textfield {...fieldProps} />
-											)}
-										</Field> */}
 
               <Field
                 name="type"
