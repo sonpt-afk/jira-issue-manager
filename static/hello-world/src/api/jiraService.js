@@ -24,7 +24,7 @@ export const fetchIssuesByProject = async (
 
   const jql = `project = "${projectKey}" ORDER BY created DESC`;
   let fields = "summary,status,assignee,issuetype";
-  if(includeParent){
+  if (includeParent) {
     fields += ",parent";
   }
   if (!fetchAllPages) {
@@ -66,23 +66,26 @@ export const fetchIssuesByProject = async (
 
         if (!response.ok) {
           const errorText = await response.text();
-          console.error(`Failed to fetch issues for project ${projectKey}:`, errorText);
+          console.error(
+            `Failed to fetch issues for project ${projectKey}:`,
+            errorText
+          );
           throw new Error(`Failed to fetch issues: ${response.status}`);
         }
 
         const result = await response.json();
-        
+
         if (!result.issues || result.issues.length === 0) {
           break;
         }
-        
+
         allIssues = [...allIssues, ...result.issues];
         total = result.total;
-        
+
         currentStartAt += maxResults;
         hasMore = allIssues.length < total;
       }
-      
+
       return {
         issues: allIssues,
         total: total,
@@ -94,51 +97,24 @@ export const fetchIssuesByProject = async (
   }
 };
 
-
-
 export const updateIssue = async (issueId, updateData) => {
-  
-  const body = {
-    fields: {},
-  };
-
-  // Handle transition for status update
-  if (updateData.transitionId) {
-    body.transition = { id: updateData.transitionId };
-  }
-
-  // Handle summary
-  if (updateData.summary) {
-    body.fields.summary = updateData.summary;
-  }
-
-  // Handle issuetype (Work Type)
-  if (updateData.type) {
-    body.fields.issuetype = { name: updateData.type };
-  }
-
-  // Handle assignee update
-if (updateData.assignee) {
-  if (updateData.assignee === 'unassigned') {
-    body.fields.assignee = null; // Unassign the issue
-  } else {
-    body.fields.assignee = { accountId: updateData.assignee };
-  }
-}
-
   const response = await requestJira(`/rest/api/3/issue/${issueId}`, {
     method: "PUT",
     headers: {
       Accept: "application/json",
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(body),
+    body: JSON.stringify(updateData), // Use updateData directly as it's already correctly formatted
   });
 
   if (!response.ok) {
     // Log the error response for better debugging
     const errorText = await response.text();
-    console.error(`Failed to update issue ${issueId}:`, response.status, errorText);
+    console.error(
+      `Failed to update issue ${issueId}:`,
+      response.status,
+      errorText
+    );
     // Re-throw the error to be caught by the calling component
     throw new Error(errorText);
   }
@@ -150,7 +126,9 @@ export const getIssueTransitions = async (issueId) => {
   if (!issueId) {
     return [];
   }
-  const response = await requestJira(`/rest/api/3/issue/${issueId}/transitions`);
+  const response = await requestJira(
+    `/rest/api/3/issue/${issueId}/transitions`
+  );
   if (!response.ok) {
     console.error(
       `Failed to fetch transitions for issue ${issueId}:`,
@@ -184,15 +162,18 @@ export const getWorkType = async (projectId) => {
 // Fetch assignable users for a given project
 export const getAssignableUsers = async (projectKey) => {
   if (!projectKey) return [];
-  
+
   const response = await requestJira(
     `/rest/api/3/user/assignable/search?project=${projectKey}`
   );
-  
+
   if (!response.ok) {
-    console.error(`Failed to fetch assignable users for project ${projectKey}:`, await response.text());
+    console.error(
+      `Failed to fetch assignable users for project ${projectKey}:`,
+      await response.text()
+    );
     return [];
   }
-  
+
   return response.json();
 };
