@@ -56,8 +56,9 @@ const App = () => {
         // Automatically select the first project
         if (projectOptions.length > 0) {
           const firstProject = projectOptions[0];
-          setSelectedProject(firstProject); // Cập nhật state cho Select
-          setCurrentPage(1); // Reset về trang 1
+          setSelectedProject(firstProject); 
+          console.log("🚀 ~ App ~ selectedProject:", firstProject);
+          setCurrentPage(1); 
           getIssues(firstProject.value, 1); // Tải issues cho project đó
         }
       })

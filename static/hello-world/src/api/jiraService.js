@@ -1,8 +1,5 @@
 import { requestJira } from "@forge/bridge";
 
-/**
- * Fetches all projects accessible by the user.
- */
 export const fetchProjects = async () => {
   const response = await requestJira("/rest/api/3/project");
   if (!response.ok) {
@@ -24,7 +21,6 @@ export const fetchIssuesByProject = async (
   }
 
   const jql = `project = "${projectKey}" ORDER BY created DESC`;
-  // Request specific fields to optimize the API call
   const fields = "summary,status,assignee,issuetype";
   const response = await requestJira(
     `/rest/api/3/search?jql=${encodeURIComponent(
@@ -42,15 +38,33 @@ export const fetchIssuesByProject = async (
   }
 
   const result = await response.json();
+  console.log("🚀 ~ fetchIssuesByProject ~ result:", result)
   return {
     issues: result.issues,
     total: result.total,
   };
 };
 
+// Fetch assignable users for a given project
+export const getAssignableUsers = async (projectKey) => {
+  if (!projectKey) return [];
+  
+  const response = await requestJira(
+    `/rest/api/3/user/assignable/search?project=${projectKey}`
+  );
+  
+  if (!response.ok) {
+    console.error(`Failed to fetch assignable users for project ${projectKey}:`, await response.text());
+    return [];
+  }
+  
+  return response.json();
+};
+
+
+
 export const updateIssue = async (issueId, updateData) => {
-  // Build the request body according to Jira API documentation
-  // https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issues/#api-rest-api-3-issue-issueidorkey-put
+  
   const body = {
     fields: {},
   };
@@ -70,10 +84,14 @@ export const updateIssue = async (issueId, updateData) => {
     body.fields.issuetype = { name: updateData.type };
   }
 
-  // NOTE FOR 'assignee':
-  // Assigning an issue requires the user's accountId.
-  // The payload should be: { "fields": { "assignee": { "accountId": "..." } } }
-  // We are ignoring `assignee` from the form for now.
+  // Handle assignee update
+if (updateData.assignee) {
+  if (updateData.assignee === 'unassigned') {
+    body.fields.assignee = null; // Unassign the issue
+  } else {
+    body.fields.assignee = { accountId: updateData.assignee };
+  }
+}
 
   const response = await requestJira(`/rest/api/3/issue/${issueId}`, {
     method: "PUT",
