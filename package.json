@@ -9,6 +9,8 @@
     "eslint-plugin-react-hooks": "^4.6.0"
   },
   "dependencies": {
+    "@atlaskit/spinner": "^15.6.1",
+"@atlaskit/table-tree": "^12.2.8",
     "@forge/resolver": "1.7.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"

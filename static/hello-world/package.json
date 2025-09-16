@@ -12,6 +12,8 @@
     "@atlaskit/modal-dialog": "^14.3.13",
     "@atlaskit/pagination": "^16.1.12",
     "@atlaskit/select": "^21.2.10",
+    "@atlaskit/spinner": "^19.0.4",
+    "@atlaskit/table-tree": "^12.2.8",
     "@atlaskit/textfield": "^8.0.11",
     "@forge/bridge": "^5.5.0",
     "@testing-library/dom": "^10.4.1",

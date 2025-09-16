@@ -32,10 +32,47 @@
 display: flex;
 gap: 15px;
 }
-/* .action-btn{
-  height: 20px;
-  margin: 10px 15px;
-} */
+
+/* ...existing styles... */
+
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+}
+
+.error-message {
+  color: #DE350B;
+  background-color: #FFEBE6;
+  border: 1px solid #DE350B;
+  border-radius: 3px;
+  padding: 8px 12px;
+  margin: 16px 0;
+}
+
+.action-cell {
+  display: flex;
+  gap: 8px;
+}
+
+.action-btn {
+  margin-right: 8px;
+}
+
+/* TableTree specific styles */
+[data-ds--table-tree--row] {
+  cursor: pointer;
+}
+
+[data-ds--table-tree--header] {
+  background-color: #F4F5F7;
+  font-weight: bold;
+}
+
+[data-ds--table-tree--cell] {
+  padding: 8px !important;
+}
 @keyframes App-logo-spin {
   from {
     transform: rotate(0deg);

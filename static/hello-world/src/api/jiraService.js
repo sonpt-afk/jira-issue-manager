@@ -13,7 +13,9 @@ export const fetchProjects = async () => {
 export const fetchIssuesByProject = async (
   projectKey,
   startAt = 0,
-  maxResults = 10
+  maxResults = 10,
+  includeParent = false,
+  fetchAllPages = false
 ) => {
   if (!projectKey) {
     console.error("Project key is required to fetch issues.");
@@ -21,44 +23,75 @@ export const fetchIssuesByProject = async (
   }
 
   const jql = `project = "${projectKey}" ORDER BY created DESC`;
-  const fields = "summary,status,assignee,issuetype";
-  const response = await requestJira(
-    `/rest/api/3/search?jql=${encodeURIComponent(
-      jql
-    )}&startAt=${startAt}&maxResults=${maxResults}&fields=${fields}`
-  );
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error(
-      `Failed to fetch issues for project ${projectKey}:`,
-      errorText
+  let fields = "summary,status,assignee,issuetype";
+  if(includeParent){
+    fields += ",parent";
+  }
+  if (!fetchAllPages) {
+    // Original behavior - fetch single page
+    const response = await requestJira(
+      `/rest/api/3/search?jql=${encodeURIComponent(
+        jql
+      )}&startAt=${startAt}&maxResults=${maxResults}&fields=${fields}`
     );
-    throw new Error(`Failed to fetch issues: ${response.status}`);
-  }
 
-  const result = await response.json();
-  console.log("🚀 ~ fetchIssuesByProject ~ result:", result)
-  return {
-    issues: result.issues,
-    total: result.total,
-  };
-};
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(
+        `Failed to fetch issues for project ${projectKey}:`,
+        errorText
+      );
+      throw new Error(`Failed to fetch issues: ${response.status}`);
+    }
 
-// Fetch assignable users for a given project
-export const getAssignableUsers = async (projectKey) => {
-  if (!projectKey) return [];
-  
-  const response = await requestJira(
-    `/rest/api/3/user/assignable/search?project=${projectKey}`
-  );
-  
-  if (!response.ok) {
-    console.error(`Failed to fetch assignable users for project ${projectKey}:`, await response.text());
-    return [];
+    const result = await response.json();
+    return {
+      issues: result.issues,
+      total: result.total,
+    };
+  } else {
+    // New behavior - fetch all pages
+    let allIssues = [];
+    let currentStartAt = startAt;
+    let hasMore = true;
+    let total = 0;
+
+    try {
+      while (hasMore) {
+        const response = await requestJira(
+          `/rest/api/3/search?jql=${encodeURIComponent(
+            jql
+          )}&startAt=${currentStartAt}&maxResults=${maxResults}&fields=${fields}`
+        );
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error(`Failed to fetch issues for project ${projectKey}:`, errorText);
+          throw new Error(`Failed to fetch issues: ${response.status}`);
+        }
+
+        const result = await response.json();
+        
+        if (!result.issues || result.issues.length === 0) {
+          break;
+        }
+        
+        allIssues = [...allIssues, ...result.issues];
+        total = result.total;
+        
+        currentStartAt += maxResults;
+        hasMore = allIssues.length < total;
+      }
+      
+      return {
+        issues: allIssues,
+        total: total,
+      };
+    } catch (error) {
+      console.error("Error fetching all issues:", error);
+      throw error;
+    }
   }
-  
-  return response.json();
 };
 
 
@@ -145,5 +178,21 @@ export const getWorkType = async (projectId) => {
       },
     }
   );
+  return response.json();
+};
+
+// Fetch assignable users for a given project
+export const getAssignableUsers = async (projectKey) => {
+  if (!projectKey) return [];
+  
+  const response = await requestJira(
+    `/rest/api/3/user/assignable/search?project=${projectKey}`
+  );
+  
+  if (!response.ok) {
+    console.error(`Failed to fetch assignable users for project ${projectKey}:`, await response.text());
+    return [];
+  }
+  
   return response.json();
 };
