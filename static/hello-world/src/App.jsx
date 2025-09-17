@@ -1,7 +1,5 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState } from "react";
 import Select from "@atlaskit/select";
-import DynamicTable from "@atlaskit/dynamic-table";
-import Pagination from "@atlaskit/pagination";
 import Lozenge from "@atlaskit/lozenge";
 import Avatar from "@atlaskit/avatar";
 import Button from "@atlaskit/button/new";
@@ -22,17 +20,11 @@ import {
 import "./App.css";
 import DeleteModal from "./components/DeleteModal";
 import UpdateModal from "./components/UpdateModal";
-import { view } from "@forge/bridge";
 
 const App = () => {
-  // State management
   const [projects, setProjects] = useState([]);
   const [selectedProject, setSelectedProject] = useState(null);
   const [rows, setRows] = useState([]);
-
-  const [issues, setIssues] = useState([]);
-  const [totalIssues, setTotalIssues] = useState(0);
-  const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingProjects, setIsLoadingProjects] = useState(true);
   const [isOpenDelModal, setIsOpenDelModal] = useState(false);
@@ -40,20 +32,18 @@ const App = () => {
   const [updateIssueDefaultData, setUpdateIssueDefaultData] = useState(null);
   const [deleteIssueID, setDeleteIssueID] = useState(null);
   const [updateIssueID, setUpdateIssueID] = useState(null);
-  const ISSUES_PER_PAGE = 3;
+
   const openDeleteModal = () => setIsOpenDelModal(true);
   const openUpdateModal = () => setIsOpenUpdateModal(true);
   const closeDeleteModal = () => setIsOpenDelModal(false);
   const closeUpdateModal = () => setIsOpenUpdateModal(false);
 
-  // Re-fetch issues for current project and page after a successful delete
   const handleDeleteOrUpdateSuccess = () => {
     if (selectedProject) {
-      fetchAllIssues(selectedProject.value, currentPage);
+      fetchAllIssues(selectedProject.value);
     }
   };
 
-  // Fetch all projects on initial load
   useEffect(() => {
     setIsLoadingProjects(true);
     fetchProjects()
@@ -65,43 +55,26 @@ const App = () => {
         }));
         setProjects(projectOptions);
 
-        // Automatically select the first project
         if (projectOptions.length > 0) {
           const firstProject = projectOptions[0];
           setSelectedProject(firstProject);
-          fetchAllIssues(firstProject.value); // Tải issues cho project đó
+          fetchAllIssues(firstProject.value);
         }
       })
-      .catch((err) => {
-        console.error(err);
-      })
+      .catch(console.error)
       .finally(() => setIsLoadingProjects(false));
   }, []);
 
   const fetchAllIssues = async (projectId) => {
-    if (!projectId) {
-      return;
-    }
-
+    if (!projectId) return;
     setIsLoading(true);
-
     try {
-      const { issues } = await fetchIssuesByProject(
-        projectId,
-        0,
-        100,
-        true,
-        true
-      );
-
+      const { issues } = await fetchIssuesByProject(projectId, 0, 100, true, true);
       if (!issues) {
         setRows([]);
         return;
       }
-
-      // Use the new function to build TableTree rows
       const tableTreeRows = buildTableTreeRows(issues);
-      // Save state
       setRows(tableTreeRows);
     } catch (err) {
       setRows([]);
@@ -113,104 +86,38 @@ const App = () => {
   const buildTableTreeRows = (allIssues) => {
     const issueMap = new Map();
     const rootRows = [];
-    // Vòng lặp 1: Chuyển đổi mỗi issue thành một "row object"
     allIssues.forEach((issue) => {
       const rowObject = {
         id: issue.key,
         content: [
-          {
-            id: "type",
-            content: (
-              <img
-                src={issue.fields.issuetype.iconUrl}
-                alt={issue.fields.issuetype.name}
-                style={{ height: 24 }}
-              />
-            ),
-          },
+          { id: "type", content: <img src={issue.fields.issuetype.iconUrl} alt={issue.fields.issuetype.name} style={{ height: 24 }} /> },
           { id: "key", content: issue.key },
           { id: "summary", content: issue.fields.summary },
-          {
-            id: "status",
-            content: <Lozenge>{issue.fields.status.name}</Lozenge>,
-          },
-          {
-            id: "assignee",
-            content: issue.fields.assignee ? (
-              <div style={{ display: "flex", alignItems: "center" }}>
-                <Avatar
-                  src={issue.fields.assignee.avatarUrls["24x24"]}
-                  size="small"
-                />
-                <span style={{ marginLeft: 8 }}>
-                  {issue.fields.assignee.displayName}
-                </span>
-              </div>
-            ) : (
-              "Unassigned"
-            ),
-          },
-          {
-            id: "action",
-            content: (
-              <div className="action-cell">
-                <Button
-                  className="action-btn"
-                  appearance="primary"
-                  onClick={() => {
-                    openUpdateModal();
-                    setUpdateIssueDefaultData(issue);
-                    setUpdateIssueID(issue.id);
-                  }}
-                >
-                  Update
-                </Button>
-                <Button
-                  className="action-btn"
-                  appearance="danger"
-                  onClick={() => {
-                    openDeleteModal();
-                    setDeleteIssueID(issue.id);
-                  }}
-                >
-                  Delete
-                </Button>
-              </div>
-            ),
-          },
+          { id: "status", content: <Lozenge>{issue.fields.status.name}</Lozenge> },
+          { id: "assignee", content: issue.fields.assignee ? <div style={{ display: "flex", alignItems: "center" }}><Avatar src={issue.fields.assignee.avatarUrls["24x24"]} size="small" /><span style={{ marginLeft: 8 }}>{issue.fields.assignee.displayName}</span></div> : "Unassigned" },
+          { id: "action", content: <div className="action-cell"><Button className="action-btn" appearance="primary" onClick={() => { openUpdateModal(); setUpdateIssueDefaultData(issue); setUpdateIssueID(issue.id); }}>Update</Button><Button className="action-btn" appearance="danger" onClick={() => { openDeleteModal(); setDeleteIssueID(issue.id); }}>Delete</Button></div> },
         ],
-        // Store the original issue for reference
         issue: issue,
-        // Children array for nested issues
         children: [],
       };
-      // Lưu vào map với key là issue key (ví dụ: "PROJ-123")
       issueMap.set(issue.key, rowObject);
     });
 
-    // Vòng lặp 2: Xây dựng quan hệ cha-con
     allIssues.forEach((issue) => {
       const currentKey = issue.key;
       const parentKey = issue.fields.parent?.key;
-
       if (parentKey && issueMap.has(parentKey)) {
-        // Nếu issue này có cha và cha nó cũng nằm trong danh sách
         const parentRow = issueMap.get(parentKey);
         const currentRow = issueMap.get(currentKey);
-        // Thêm issue hiện tại vào mảng children của cha nó
         parentRow.children.push(currentRow);
       } else {
-        // No parent or parent not in dataset - this is a root issue
         const currentRow = issueMap.get(currentKey);
         rootRows.push(currentRow);
       }
     });
-
-    //trả về mảng chỉ gồm các issue gốc
     return rootRows;
   };
 
-  // Handler for project selection change
   const handleProjectChange = (selection) => {
     setSelectedProject(selection);
     fetchAllIssues(selection.value);
@@ -218,20 +125,6 @@ const App = () => {
 
   return (
     <div style={{ padding: "16px" }}>
-      <div
-        style={{
-          backgroundColor: "#E3FCEF",
-          padding: "8px",
-          marginBottom: "16px",
-          borderRadius: "3px",
-        }}
-      >
-        App is rendering. {projects.length} projects loaded.
-        {selectedProject && ` Selected project: ${selectedProject.label}`}
-        {isLoading && " Loading issues..."}
-        {!isLoading && ` Rows loaded: ${rows.length}`}
-      </div>
-      <h2>Jira Issue Manager</h2>
       <Select
         inputId="project-select"
         className="single-select"
@@ -247,20 +140,11 @@ const App = () => {
       {selectedProject && (
         <div style={{ marginTop: "16px" }}>
           {isLoading ? (
-            <div className="loading-container">
-              <Spinner size="large" />
-            </div>
+            <div className="loading-container"><Spinner size="large" /></div>
           ) : (
             <>
               {rows.length === 0 ? (
-                <div
-                  style={{
-                    padding: "16px",
-                    textAlign: "center",
-                    border: "1px solid #DFE1E6",
-                    borderRadius: "3px",
-                  }}
-                >
+                <div style={{ padding: "16px", textAlign: "center", border: "1px solid #DFE1E6", borderRadius: "3px" }}>
                   No issues found for this project.
                 </div>
               ) : (
@@ -277,15 +161,8 @@ const App = () => {
                     <Rows
                       items={rows}
                       render={(row) => (
-                        <Row
-                          itemId={row.id}
-                          items={row.children}
-                          hasChildren={row.children.length > 0}
-                          shouldExpandOnClick
-                        >
-                          {row.content.map((cell) => (
-                            <Cell key={cell.id}>{cell.content}</Cell>
-                          ))}
+                        <Row itemId={row.id} items={row.children} hasChildren={row.children.length > 0} shouldExpandOnClick>
+                          {row.content.map((cell) => (<Cell key={cell.id}>{cell.content}</Cell>))}
                         </Row>
                       )}
                     />
@@ -297,25 +174,10 @@ const App = () => {
         </div>
       )}
 
-      {isOpenDelModal && (
-        <DeleteModal
-          closeDeleteModal={closeDeleteModal}
-          deleteIssueID={deleteIssueID}
-          onDeleteSuccess={handleDeleteOrUpdateSuccess}
-        />
-      )}
-
-      {isOpenUpdateModal && (
-        <UpdateModal
-          closeUpdateModal={closeUpdateModal}
-          onUpdateSuccess={handleDeleteOrUpdateSuccess}
-          updateIssueDefaultData={updateIssueDefaultData}
-          updateIssueID={updateIssueID}
-          selectedProject={selectedProject}
-        />
-      )}
+      {isOpenDelModal && <DeleteModal closeDeleteModal={closeDeleteModal} deleteIssueID={deleteIssueID} onDeleteSuccess={handleDeleteOrUpdateSuccess} />}
+      {isOpenUpdateModal && <UpdateModal closeUpdateModal={closeUpdateModal} onUpdateSuccess={handleDeleteOrUpdateSuccess} updateIssueDefaultData={updateIssueDefaultData} updateIssueID={updateIssueID} selectedProject={selectedProject} />}
     </div>
   );
-};
+}
 
 export default App;
