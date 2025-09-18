@@ -9,10 +9,11 @@ modules:
           entityPropertyExists:
             entity: project
             propertyKey: disable_app
-  jira:projectSettings:
-    - key: jira-issue-manager-admin-page
-      resource: admin-app
-      title: Issue Manager Settings
+  jira:projectSettingsPage:
+      - key: jira-issue-manager-admin-page
+        resource: admin-app
+        title: Project Settings
+        section: general
 resources:
   - key: react-app
     path: static/hello-world/build
@@ -24,6 +25,7 @@ permissions:
     - write:jira-work
     - read:jira-user
     - manage:jira-configuration
+    - manage:jira-project
   content:
     styles:
       - unsafe-inline
