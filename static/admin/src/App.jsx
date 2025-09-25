@@ -11,7 +11,7 @@ import {
 const PROPERTY_KEY = 'disable_app';
 
 function App() {
-  const [isAppDisabled, setIsAppDisabled] = useState(false);
+  const [isAppEnabled, setIsAppEnabled] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [projectContext, setProjectContext] = useState(null);
@@ -33,14 +33,14 @@ function App() {
     .then(property => {
       //if property exists, the app is disabled for project
       if(property !== null){
-        setIsAppDisabled(true);
+        setIsAppEnabled(false);
       }else{
-        setIsAppDisabled(false);
+        setIsAppEnabled(true);
       }
     })
     .catch(error => {
               setError(`Error loading settings: ${error.message}`);
-      setIsAppDisabled(false);
+      setIsAppEnabled(true);
     })
     .finally(()=>{
       setIsLoading(false);
@@ -48,7 +48,7 @@ function App() {
   }, []);
 
   const handleToggleChange = () => {
-    setIsAppDisabled(!isAppDisabled);
+    setIsAppEnabled(!isAppEnabled);
   };
 
   const handleSave = () => {
@@ -58,9 +58,9 @@ function App() {
     const projectId = projectContext.id;
 
     //if toggle to disable then create the property. toggle to enable then delete the property
-    const saveOperation = isAppDisabled ? setProjectProperty(projectId, PROPERTY_KEY, true) : deleteProjectProperty(projectId, PROPERTY_KEY);
+    const saveOperation = isAppEnabled ?  deleteProjectProperty(projectId, PROPERTY_KEY) : setProjectProperty(projectId, PROPERTY_KEY, true);
     saveOperation.then(() => {
-      console.log(`App is now ${isAppDisabled ? 'disabled' : 'enabled'} for this project `);
+      console.log(`App is now ${isAppEnabled ? 'enabled' : 'disabled'} for this project `);
     }).catch(error => {
         console.error("Error saving settings:", error);
         setError(`Error saving settings: ${error.message}`);
@@ -90,12 +90,12 @@ function App() {
         <>
           <div style={{ marginTop: '24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px', border: '1px solid #DFE1E6', borderRadius: '3px' }}>
             <label htmlFor="app-toggle">
-              <strong style={{ fontSize: '16px' }}>Disable app for project {projectContext?.name}</strong>
+              <strong style={{ fontSize: '16px' }}>Enable app for project {projectContext?.name}</strong>
             </label>
             <Toggle
               id="app-toggle"
               size='large'
-              isChecked={isAppDisabled}
+              isChecked={isAppEnabled}
               onChange={handleToggleChange}
             />
           </div>
