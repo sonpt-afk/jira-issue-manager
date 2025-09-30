@@ -159,6 +159,50 @@ export const getWorkType = async (projectId) => {
   return response.json();
 };
 
+export const fetchJiraUsers = async (startAt = 0, maxResults = 50) => {
+  try {
+    const response = await requestJira(`/rest/api/3/user/search?query=&startAt=${startAt}&maxResults=${maxResults}`, {
+      headers: { 'Accept': 'application/json' }
+      
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`Failed to fetch Jira users:`, errorText);
+      throw new Error(`Failed to fetch Jira users: ${response.status}`);
+    }
+    
+    // The Jira User Search API returns an array directly
+    // https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-users/#api-rest-api-3-user-search-get
+    return response.json();
+  } catch (error) {
+    console.error("Error fetching Jira users:", error);
+    throw error;
+  }
+}
+export const fetchAllJiraUsers = async (pageSize = 50) => {
+  let allUsers = [];
+  let startAt = 0;
+  let hasMoreData = true;
+
+  while (hasMoreData) {
+    const users = await fetchJiraUsers(startAt, pageSize);
+    // Chỉ giữ lại 4 trường cần thiết
+    const simplifiedUsers = users.map(user => ({
+      accountId: user?.accountId,
+      displayName: user?.displayName,
+      active: user?.active
+    }));
+    allUsers.push(...simplifiedUsers);
+    if (users.length < pageSize || users.length === 0) {
+      hasMoreData = false; // Đã lấy hết dữ liệu
+    } else {
+      startAt += pageSize; // Tiếp tục
+    }
+  }
+  return allUsers;
+}
+
 // Fetch assignable users for a given project
 export const getAssignableUsers = async (projectKey) => {
   if (!projectKey) return [];
@@ -177,10 +221,3 @@ export const getAssignableUsers = async (projectKey) => {
 
   return response.json();
 };
-
-
-
-
-
-
-

@@ -16,6 +16,9 @@ import {
   fetchIssuesByProject,
   deleteIssue,
   updateIssue,
+  fetchJiraUsers,
+  fetchAllJiraUsers
+  
 } from "./api/jiraService";
 import "./App.css";
 import DeleteModal from "./components/DeleteModal";
@@ -46,6 +49,11 @@ const App = () => {
 
   useEffect(() => {
     setIsLoadingProjects(true);
+    fetchAllJiraUsers().then((users) => {
+      console.log('Fetching all Jira users for the first time...');
+      users.forEach(user => console.log(user));
+      console.log("Number of Fetched users:", users.length);
+    }).catch(error => console.error("Error fetching all Jira users:", error));
     fetchProjects()
       .then((data) => {
         const projectOptions = data.map((p) => ({
@@ -69,6 +77,7 @@ const App = () => {
     if (!projectId) return;
     setIsLoading(true);
     try {
+      console.log('butcher2423')
       const { issues } = await fetchIssuesByProject(projectId, 0, 100, true, true);
       if (!issues) {
         setRows([]);

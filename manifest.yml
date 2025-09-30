@@ -10,10 +10,10 @@ modules:
             entity: project
             propertyKey: disable_app
   jira:projectSettingsPage:
-      - key: jira-issue-manager-admin-page
-        resource: admin-app
-        title: Project Settings
-        section: general
+    - key: jira-issue-manager-admin-page
+      resource: admin-app
+      title: Project Settings
+      section: general
 resources:
   - key: react-app
     path: static/hello-world/build
