@@ -23,6 +23,7 @@ import {
 import "./App.css";
 import DeleteModal from "./components/DeleteModal";
 import UpdateModal from "./components/UpdateModal";
+import UserTable from "./components/usertable";
 
 const App = () => {
   const [projects, setProjects] = useState([]);
@@ -185,6 +186,7 @@ const App = () => {
 
       {isOpenDelModal && <DeleteModal closeDeleteModal={closeDeleteModal} deleteIssueID={deleteIssueID} onDeleteSuccess={handleDeleteOrUpdateSuccess} />}
       {isOpenUpdateModal && <UpdateModal closeUpdateModal={closeUpdateModal} onUpdateSuccess={handleDeleteOrUpdateSuccess} updateIssueDefaultData={updateIssueDefaultData} updateIssueID={updateIssueID} selectedProject={selectedProject} />}
+      <UserTable />
     </div>
   );
 }
